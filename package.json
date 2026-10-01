@@ -1,0 +1,18 @@
+{
+  "name": "spice-garden-mern",
+  "version": "1.0.0",
+  "description": "Spice Garden - Full-Stack MERN Restaurant Ordering System (Bangalore)",
+  "scripts": {
+    "server": "npm run dev --prefix backend",
+    "client": "npm run dev --prefix frontend",
+    "admin": "npm run dev --prefix admin",
+    "tunnel": "npx -y localtunnel --port 5000 --subdomain spicegarden-api",
+    "dev:all": "concurrently \"npm run server\" \"npm run admin\" \"npm run tunnel\"",
+    "dev": "concurrently \"npm run server\" \"npm run client\" \"npm run admin\"",
+    "seed": "npm run seed --prefix backend",
+    "build": "npm run build --prefix frontend && npm run build --prefix admin"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
