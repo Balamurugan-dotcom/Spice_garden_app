@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const rawBaseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/+$/, '');
+const rawBaseUrl = (import.meta.env.VITE_API_URL || 'https://spice-garden-app-q7bs.onrender.com').replace(/\/+$/, '');
 const API_BASE_URL = rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl}/api`;
 
 const adminApi = axios.create({

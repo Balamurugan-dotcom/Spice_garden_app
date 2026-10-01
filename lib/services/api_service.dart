@@ -18,16 +18,17 @@ class ApiService {
 
   // Auto-detect best default URL based on target platform
   static String get defaultBaseUrl {
-    // Public tunnel allows physical devices & friends outside local Wi-Fi to connect
-    return 'https://spicegarden-api.loca.lt/api';
+    // Permanent cloud backend on Render (works worldwide on 4G/5G/Wi-Fi)
+    return 'https://spice-garden-app-q7bs.onrender.com/api';
   }
 
   // Pre-configured common URLs for easy 1-tap switching in UI
   static const List<String> commonUrls = [
-    'https://spicegarden-api.loca.lt/api', // Public Tunnel (Works for friends anywhere!)
-    'http://192.168.0.129:5000/api',       // Local Wi-Fi (Home network)
-    'http://10.0.2.2:5000/api',            // Android Emulator
-    'http://localhost:5000/api',           // Windows / Web / Mac
+    'https://spice-garden-app-q7bs.onrender.com/api', // Cloud Backend (Production - 24/7)
+    'https://spicegarden-api.loca.lt/api',            // Public Tunnel (Local fallback)
+    'http://192.168.0.129:5000/api',                  // Local Wi-Fi (Home network)
+    'http://10.0.2.2:5000/api',                       // Android Emulator
+    'http://localhost:5000/api',                      // Windows / Web / Mac
   ];
 
   String get baseUrl => _customBaseUrl ?? defaultBaseUrl;
