@@ -101,10 +101,19 @@ class ApiService {
   }
 
   Future<String> getWorkingBaseUrl() async {
-    // If current URL is already working, use it
+    // 1. First prioritize primary Render cloud backend (shared by mobile and Vercel admin)
+    const productionUrl = 'https://spice-garden-app-q7bs.onrender.com/api';
+    if (await checkHealth(productionUrl)) {
+      _customBaseUrl = productionUrl;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_keyBaseUrl, productionUrl);
+      return productionUrl;
+    }
+
+    // 2. If current URL is already working, use it
     if (await checkHealth()) return baseUrl;
 
-    // Probe common candidates
+    // 3. Probe common fallback candidates
     for (final candidate in commonUrls) {
       if (candidate == baseUrl) continue;
       if (await checkHealth(candidate)) {
