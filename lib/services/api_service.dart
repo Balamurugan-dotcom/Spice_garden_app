@@ -89,7 +89,7 @@ class ApiService {
       final res = await http.get(
         uri,
         headers: {'bypass-tunnel-reminder': 'true'},
-      ).timeout(const Duration(milliseconds: 3000));
+      ).timeout(const Duration(seconds: 8));
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
         return body['status'] == 'online';
@@ -138,7 +138,7 @@ class ApiService {
             headers: _headers(),
             body: jsonEncode({'email': email, 'password': password}),
           )
-          .timeout(const Duration(seconds: 3));
+          .timeout(const Duration(seconds: 15));
 
       final data = jsonDecode(res.body);
       if (res.statusCode == 200 && data['success'] == true) {
@@ -181,7 +181,7 @@ class ApiService {
 
       final res = await http
           .post(uri, headers: _headers(), body: jsonEncode(body))
-          .timeout(const Duration(seconds: 3));
+          .timeout(const Duration(seconds: 15));
 
       final data = jsonDecode(res.body);
       if (res.statusCode == 201 && data['success'] == true) {
@@ -218,7 +218,7 @@ class ApiService {
   Future<List<Map<String, dynamic>>?> fetchFoods() async {
     try {
       final uri = Uri.parse('$baseUrl/foods');
-      final res = await http.get(uri, headers: _headers()).timeout(const Duration(seconds: 8));
+      final res = await http.get(uri, headers: _headers()).timeout(const Duration(seconds: 12));
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
         if (body['success'] == true && body['data'] is List) {
@@ -278,16 +278,16 @@ class ApiService {
     required String paymentMethod,
     String? couponCode,
   }) async {
-    await getWorkingBaseUrl();
-    if (_cachedToken == null) {
+    final activeUrl = await getWorkingBaseUrl();
+    if (_cachedToken == null || _cachedToken!.isEmpty) {
       await ensureAuthenticated();
     }
-    if (_cachedToken == null) {
+    if (_cachedToken == null || _cachedToken!.isEmpty) {
       return {'success': false, 'message': 'Authentication required. Please log in first.'};
     }
 
     try {
-      final uri = Uri.parse('$baseUrl/orders');
+      final uri = Uri.parse('$activeUrl/orders');
       final body = {
         'items': items,
         'deliveryAddress': deliveryAddress,
@@ -297,7 +297,7 @@ class ApiService {
 
       final res = await http
           .post(uri, headers: _headers(needsAuth: true), body: jsonEncode(body))
-          .timeout(const Duration(seconds: 12));
+          .timeout(const Duration(seconds: 25));
 
       final data = jsonDecode(res.body);
       if (res.statusCode == 201 && data['success'] == true) {
