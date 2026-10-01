@@ -35,8 +35,21 @@ class ApiService {
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
-    _customBaseUrl = prefs.getString(_keyBaseUrl);
-    _cachedToken = prefs.getString(_keyToken);
+    final savedUrl = prefs.getString(_keyBaseUrl);
+    // Automatically migrate from old local IPs (192.168.x / localhost / 10.0.2.2) to the permanent Render cloud URL
+    if (savedUrl != null &&
+        (savedUrl.contains('localhost') ||
+            savedUrl.contains('192.168.') ||
+            savedUrl.contains('10.0.2.2'))) {
+      await prefs.remove(_keyBaseUrl);
+      await prefs.remove(_keyToken);
+      _customBaseUrl = null;
+      _cachedToken = null;
+    } else {
+      _customBaseUrl = savedUrl;
+      _cachedToken = prefs.getString(_keyToken);
+    }
+
     final userJson = prefs.getString(_keyUser);
     if (userJson != null) {
       try {
@@ -45,9 +58,9 @@ class ApiService {
     }
 
     // Auto-detect and cache active working backend URL
-    unawaited(getWorkingBaseUrl().then((_) {
-      ensureAuthenticated();
-      fetchFoods();
+    unawaited(getWorkingBaseUrl().then((_) async {
+      await ensureAuthenticated();
+      await fetchFoods();
     }));
   }
 
@@ -252,7 +265,23 @@ class ApiService {
   }
 
   Future<bool> ensureAuthenticated() async {
-    if (_cachedToken != null && _cachedToken!.isNotEmpty) return true;
+    final activeUrl = await getWorkingBaseUrl();
+    // 1. If we have a cached token, test if it is valid for this active server
+    if (_cachedToken != null && _cachedToken!.isNotEmpty) {
+      try {
+        final uri = Uri.parse('$activeUrl/orders/my-orders');
+        final res = await http
+            .get(uri, headers: _headers(needsAuth: true))
+            .timeout(const Duration(seconds: 5));
+        if (res.statusCode == 200) return true;
+        // If server returns 401, token is from old/different server; clear and re-authenticate
+        _cachedToken = null;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(_keyToken);
+      } catch (_) {}
+    }
+
+    // 2. Log in or register with customer account on active server
     try {
       final res = await login('rahul@example.com', 'Customer@123');
       if (res['success'] == true) return true;
@@ -295,9 +324,20 @@ class ApiService {
         if (couponCode != null && couponCode.isNotEmpty) 'couponCode': couponCode,
       };
 
-      final res = await http
+      var res = await http
           .post(uri, headers: _headers(needsAuth: true), body: jsonEncode(body))
           .timeout(const Duration(seconds: 25));
+
+      // If token expired or rejected by server, refresh token and retry once
+      if (res.statusCode == 401) {
+        _cachedToken = null;
+        final authed = await ensureAuthenticated();
+        if (authed) {
+          res = await http
+              .post(uri, headers: _headers(needsAuth: true), body: jsonEncode(body))
+              .timeout(const Duration(seconds: 25));
+        }
+      }
 
       final data = jsonDecode(res.body);
       if (res.statusCode == 201 && data['success'] == true) {

@@ -1157,9 +1157,9 @@ class _MainTabScreenState extends State<MainTabScreen> {
                           children: [
                             Container(width: 5, height: 5, decoration: const BoxDecoration(color: AppColors.vegGreen, shape: BoxShape.circle)),
                             const SizedBox(width: 3),
-                            const Text(
-                              'PORT 5000',
-                              style: TextStyle(
+                            Text(
+                              ApiService().baseUrl.contains('render') ? 'CLOUD LIVE' : 'ONLINE',
+                              style: const TextStyle(
                                 fontSize: 8.5,
                                 fontWeight: FontWeight.w900,
                                 color: AppColors.vegGreen,
